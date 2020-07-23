@@ -278,6 +278,7 @@ class CoNLLParser(FileParser):
     ...
     ```
     """
+
     def parse(self, file):
         data = []
         file = EncodedIO(file)
@@ -335,6 +336,7 @@ class PlainTextParser(FileParser):
     ...
     ```
     """
+
     def parse(self, file):
         file = EncodedIO(file)
         file = io.TextIOWrapper(file, encoding=file.encoding)
@@ -349,46 +351,55 @@ class FastTextParser(FileParser):
     """Uploads fast text.
 
     The file format is as follows:
+
+    The file format is comma separated values.
+    Column names are required at the top of a file.
+    For example:
     ```
-   todo
+    __label__sauce __label__cheese How much does potato starch affect a cheese sauce recipe?
+    __label__food-safety __label__acidity Dangerous pathogens capable of growing in acidic environments
+    __label__cast-iron __label__stove How do I cover up the white spots on my cast iron stove?
+    __label__restaurant Michelin Three Star Restaurant; but if the chef is not there
+    __label__knife-skills __label__dicing Without knife skills, how can I quickly and accurately dice vegetables?
+
     ...
     ```
     """
-    def parseFastText(self, testInput):
-        items = testInput.split()
-        labels = []
+
+    def parse_fasttext(self, file):
+        items = file.split()
+
         text = []
         for item in items:
             if '__label__' in item:
-              labels.append(item)
+                text.append(item)
             else:
-              text.append(item)
-       
+                text.append(item)
+
         return (' '.join(text))
-    
-    def parseFastLabels(self, testInput):
-        items = testInput.split()
+
+    def parseFastLabels(self, file):
+        items = file.split()
         labels = []
         text = []
         for item in items:
             if '__label__' in item:
-              labels.append(item.replace('__label__', ''))
+                labels.append(item.replace('__label__', ''))
             else:
-              text.append(item)
+                text.append(item)
         return labels
- 
+
     def parse(self, file):
         #raise FileParseException(line_num=1, line='Unable to guess FAST')
         file = EncodedIO(file)
         file = io.TextIOWrapper(file, encoding=file.encoding)
         while True:
             batch = list(itertools.islice(file, settings.IMPORT_BATCH_SIZE))
-        
+
             if not batch:
                 break
-            
-            
-            yield [{'text': self.parseFastText(line), 'labels': self.parseFastLabels(line)} for line in batch]
+
+            yield [{'text': self.parse_fasttext(line), 'labels': self.parseFastLabels(line)} for line in batch]
 
 
 class CSVParser(FileParser):
@@ -405,6 +416,7 @@ class CSVParser(FileParser):
     ...
     ```
     """
+
     def parse(self, file):
         file = EncodedIO(file)
         file = io.TextIOWrapper(file, encoding=file.encoding)
@@ -533,35 +545,13 @@ class JSONPainter(object):
 
 
 class FASTPainter(JSONPainter):
-    
-    def paint(self, documents):
-        serializer = DocumentSerializer(documents, many=True)
-        serializer_labels = LabelSerializer(labels, many=True)
-        data = []
-        
-        for d in serializer.data:
-            answer = ""
-            print(serializer.data)
-            d['meta'] = json.loads(d['meta'])
-            for a in d['annotations']:
-                a.pop('id')
-                a.pop('prob')
-                a.pop('document')
-                a.pop('user')
-                
-            d.pop('id')
-          
-            answer += d['text']
-            data.append(answer)
-            print(d)
-        return data
-    
+
     @staticmethod
     def paint_labels(documents, labels):
         serializer_labels = LabelSerializer(labels, many=True)
         serializer = DocumentSerializer(documents, many=True)
         data = []
-    
+
         for d in serializer.data:
             answer = ""
             labels = []
@@ -570,16 +560,13 @@ class FASTPainter(JSONPainter):
                 label_text = label_obj['text']
 
                 labels.append('__label__' + label_text)
-            answer += ''.join(labels)
+            answer = answer + ''.join(labels)
             d.pop('annotations')
             d['labels'] = labels
-            answer += ' '
-            answer += d['text']
-     
-         
-            print(data)
+            answer = answer + ' ' + d['text']
             data.append(answer.strip('"'))
         return data
+
 
 class CSVPainter(JSONPainter):
 

@@ -12,7 +12,8 @@ if [[ ! -f "${venv}/bin/python" ]]; then
   python3 -m venv "${venv}"
   "${venv}/bin/pip" install --upgrade --no-cache-dir pip setuptools
 fi
-
+echo "starting tests.."
+"${venv}/bin/python" -u "${app}/manage.py" test
 echo "Installing dependencies"
 apt-get update && apt-get install -y g++ unixodbc-dev # pyodbc build dependencies
 "${venv}/bin/pip" install --no-cache-dir -r "${root}/requirements.txt"
@@ -30,6 +31,7 @@ if [[ -n "${ADMIN_USERNAME}" ]] && [[ -n "${ADMIN_PASSWORD}" ]] && [[ -n "${ADMI
     --noinput \
   || true
 fi
-
+echo "starting tests.."
+"${venv}/bin/python" -u "${app}/manage.py" test
 echo "Starting django"
 "${venv}/bin/python" -u "${app}/manage.py" runserver "$@"

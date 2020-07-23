@@ -375,7 +375,6 @@ class TextDownloadAPI(APIView):
         if format == 'csv':
             return ()
         elif format == 'fast':
-            print("selected fast")
             return FASTPainter()
         elif format == 'json' or format == "json1":
             return JSONPainter()
