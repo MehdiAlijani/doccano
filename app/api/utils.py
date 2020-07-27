@@ -278,6 +278,7 @@ class CoNLLParser(FileParser):
     ...
     ```
     """
+
     def parse(self, file):
         data = []
         file = EncodedIO(file)
@@ -335,6 +336,7 @@ class PlainTextParser(FileParser):
     ...
     ```
     """
+
     def parse(self, file):
         file = EncodedIO(file)
         file = io.TextIOWrapper(file, encoding=file.encoding)
@@ -343,6 +345,51 @@ class PlainTextParser(FileParser):
             if not batch:
                 break
             yield [{'text': line.strip()} for line in batch]
+
+
+class FastTextParser(FileParser):
+    """Uploads fasttext
+
+    The file fasttext format is as follows:
+
+    For example:
+    ```
+    __label__sauce __label__cheese How much does potato starch affect a cheese sauce recipe?
+
+    ```
+    """
+
+    def parse_fasttext(self, text):
+        items = text.split()
+
+        text = []
+        for item in items:
+            if ('__label__' not in item):
+                text.append(item)
+
+        return (' '.join(text))
+
+    def parse_fast_labels(self, text):
+        items = text.split()
+        labels = []
+        text = []
+        for item in items:
+            if '__label__' in item:
+                labels.append(item.replace('__label__', ''))
+            else:
+                break
+        return labels
+
+    def parse(self, file):
+        file = EncodedIO(file)
+        file = io.TextIOWrapper(file, encoding=file.encoding)
+        while True:
+            batch = list(itertools.islice(file, settings.IMPORT_BATCH_SIZE))
+
+            if not batch:
+                break
+
+            yield [{'text': self.parse_fasttext(line), 'labels': self.parse_fast_labels(line)} for line in batch]
 
 
 class CSVParser(FileParser):
@@ -359,6 +406,7 @@ class CSVParser(FileParser):
     ...
     ```
     """
+
     def parse(self, file):
         file = EncodedIO(file)
         file = io.TextIOWrapper(file, encoding=file.encoding)
@@ -483,6 +531,27 @@ class JSONPainter(object):
             d['labels'] = labels
             d['meta'] = json.loads(d['meta'])
             data.append(d)
+        return data
+
+
+class FASTText(JSONPainter):
+
+    @staticmethod
+    def paint_labels(documents, labels):
+        serializer_labels = LabelSerializer(labels, many=True)
+        serializer = DocumentSerializer(documents, many=True)
+        data = []
+
+        for d in serializer.data:
+            answer = ""
+            labels = []
+            for a in d['annotations']:
+                label_obj = [x for x in serializer_labels.data if x['id'] == a['label']][0]
+                label_text = label_obj['text']
+
+                labels.append("{} {}".format("__label", label_text))
+
+            data.append("{} {}".format(" ".join(labels), text))
         return data
 
 

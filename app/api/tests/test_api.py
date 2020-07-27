@@ -9,7 +9,7 @@ from model_mommy import mommy
 
 from ..models import User, SequenceAnnotation, Document, Role, RoleMapping
 from ..models import DOCUMENT_CLASSIFICATION, SEQUENCE_LABELING, SEQ2SEQ, SPEECH2TEXT
-from ..utils import PlainTextParser, CoNLLParser, JSONParser, CSVParser
+from ..utils import PlainTextParser, CoNLLParser, JSONParser, CSVParser, FastTextParser
 from ..exceptions import FileParseException
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -163,8 +163,8 @@ class TestProjectDetailAPI(APITestCase):
         non_project_member = User.objects.create_user(username=cls.non_project_member_name,
                                                       password=cls.non_project_member_pass)
         project_admin = User.objects.create_superuser(username=cls.admin_user_name,
-                                                   password=cls.admin_user_pass,
-                                                   email='fizz@buzz.com')
+                                                      password=cls.admin_user_pass,
+                                                      email='fizz@buzz.com')
 
         cls.main_project = mommy.make('TextClassificationProject', users=[cls.project_member, project_admin])
         mommy.make('TextClassificationProject', users=[non_project_member])
@@ -232,8 +232,8 @@ class TestLabelListAPI(APITestCase):
         non_project_member = User.objects.create_user(username=cls.non_project_member_name,
                                                       password=cls.non_project_member_pass)
         project_admin = User.objects.create_superuser(username=cls.admin_user_name,
-                                                   password=cls.admin_user_pass,
-                                                   email='fizz@buzz.com')
+                                                      password=cls.admin_user_pass,
+                                                      email='fizz@buzz.com')
         cls.main_project = mommy.make('Project', users=[cls.project_member, project_admin])
         cls.main_project_label = mommy.make('Label', project=cls.main_project)
 
@@ -1421,6 +1421,9 @@ class TestParser(APITestCase):
     def test_give_classification_data_to_csv_parser(self):
         self.parser_helper(filename='example.csv', parser=CSVParser())
 
+    def test_give_classification_data_to_fasttext_parser(self):
+        self.parser_helper(filename='example_fasttext.text', parser=FastTextParser())
+
     def test_give_seq2seq_data_to_csv_parser(self):
         self.parser_helper(filename='example.csv', parser=CSVParser())
 
@@ -1510,6 +1513,11 @@ class TestDownloader(APITestCase):
     def test_can_download_labelling_json1(self):
         self.download_test_helper(url=self.labeling_url,
                                   format='json1',
+                                  expected_status=status.HTTP_200_OK)
+
+    def test_can_download_labelling_fasttext(self):
+        self.download_test_helper(url=self.labeling_url,
+                                  format='fasttext',
                                   expected_status=status.HTTP_200_OK)
 
     def test_can_download_plain_text(self):
@@ -1667,11 +1675,11 @@ class TestRoleMappingListAPI(APITestCase):
         cls.project_admin_pass = 'project_admin_pass'
         create_default_roles()
         project_member = User.objects.create_user(username=cls.project_member_name,
-                                                      password=cls.project_member_pass)
+                                                  password=cls.project_member_pass)
         cls.second_project_member = User.objects.create_user(username=cls.second_project_member_name,
-                                                      password=cls.second_project_member_pass)
+                                                             password=cls.second_project_member_pass)
         project_admin = User.objects.create_user(username=cls.project_admin_name,
-                                                   password=cls.project_admin_pass)
+                                                 password=cls.project_admin_pass)
         cls.main_project = mommy.make('Project', users=[project_member, project_admin, cls.second_project_member])
         cls.other_project = mommy.make('Project', users=[cls.second_project_member, project_admin])
         cls.admin_role = Role.objects.get(name=settings.ROLE_PROJECT_ADMIN)
@@ -1718,16 +1726,16 @@ class TestRoleMappingDetailAPI(APITestCase):
         cls.non_project_member_pass = 'non_project_member_pass'
         create_default_roles()
         project_admin = User.objects.create_user(username=cls.project_admin_name,
-                                                   password=cls.project_admin_pass)
+                                                 password=cls.project_admin_pass)
         project_member = User.objects.create_user(username=cls.project_member_name,
-                                                      password=cls.project_member_pass)
+                                                  password=cls.project_member_pass)
         User.objects.create_user(username=cls.non_project_member_name, password=cls.non_project_member_pass)
         project = mommy.make('Project', users=[project_admin, project_member])
         admin_role = Role.objects.get(name=settings.ROLE_PROJECT_ADMIN)
         annotator_role = Role.objects.get(name=settings.ROLE_ANNOTATOR)
         cls.rolemapping = mommy.make('RoleMapping', role=admin_role, project=project, user=project_admin)
         cls.url = reverse(viewname='rolemapping_detail', args=[project.id, cls.rolemapping.id])
-        cls.data = {'role': annotator_role.id }
+        cls.data = {'role': annotator_role.id}
 
     def test_returns_rolemapping_to_project_member(self):
         self.client.login(username=self.project_admin_name,

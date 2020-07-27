@@ -22,9 +22,9 @@ from .models import Project, Label, Document, RoleMapping, Role
 from .permissions import IsProjectAdmin, IsAnnotatorAndReadOnly, IsAnnotator, IsAnnotationApproverAndReadOnly, IsOwnAnnotation, IsAnnotationApprover
 from .serializers import ProjectSerializer, LabelSerializer, DocumentSerializer, UserSerializer, ApproverSerializer
 from .serializers import ProjectPolymorphicSerializer, RoleMappingSerializer, RoleSerializer
-from .utils import CSVParser, ExcelParser, JSONParser, PlainTextParser, CoNLLParser, AudioParser, iterable_to_io
+from .utils import CSVParser, ExcelParser, JSONParser, PlainTextParser, FastTextParser, CoNLLParser, AudioParser, iterable_to_io
 from .utils import JSONLRenderer
-from .utils import JSONPainter, CSVPainter
+from .utils import JSONPainter, CSVPainter, FASTText
 
 IsInProjectReadOnlyOrAdmin = (IsAnnotatorAndReadOnly | IsAnnotationApproverAndReadOnly | IsProjectAdmin)
 IsInProjectOrAdmin = (IsAnnotator | IsAnnotationApprover | IsProjectAdmin)
@@ -100,12 +100,11 @@ class StatisticsAPI(APIView):
 
     @staticmethod
     def _get_user_completion_data(annotation_class, annotation_filter):
-        all_annotation_objects  = annotation_class.objects.filter(annotation_filter)
+        all_annotation_objects = annotation_class.objects.filter(annotation_filter)
         set_user_data = collections.defaultdict(set)
         for ind_obj in all_annotation_objects.values('user__username', 'document__id'):
             set_user_data[ind_obj['user__username']].add(ind_obj['document__id'])
         return {i: len(set_user_data[i]) for i in set_user_data}
-
 
     def progress(self, project):
         docs = project.documents
@@ -286,6 +285,8 @@ class TextUploadAPI(APIView):
     def select_parser(cls, file_format):
         if file_format == 'plain':
             return PlainTextParser()
+        elif file_format == 'fasttext':
+            return FastTextParser()
         elif file_format == 'csv':
             return CSVParser()
         elif file_format == 'json':
@@ -367,6 +368,9 @@ class TextDownloadAPI(APIView):
         if format == "json1":
             labels = project.labels.all()
             data = JSONPainter.paint_labels(documents, labels)
+        if format == 'fasttext':
+            labels = project.labels.all()
+            data = FASTText.paint_labels(documents, labels)
         else:
             data = painter.paint(documents)
         return Response(data)
@@ -374,6 +378,8 @@ class TextDownloadAPI(APIView):
     def select_painter(self, format):
         if format == 'csv':
             return CSVPainter()
+        elif format == 'fasttext':
+            return FASTText()
         elif format == 'json' or format == "json1":
             return JSONPainter()
         else:
