@@ -1422,7 +1422,7 @@ class TestParser(APITestCase):
         self.parser_helper(filename='example.csv', parser=CSVParser())
 
     def test_give_classification_data_to_fasttext_parser(self):
-        self.parser_helper(filename='example_fasttext.text', parser=FastTextParser())
+        self.parser_helper(filename='example_fasttext.txt', parser=FastTextParser())
 
     def test_give_seq2seq_data_to_csv_parser(self):
         self.parser_helper(filename='example.csv', parser=CSVParser())

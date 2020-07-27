@@ -24,7 +24,7 @@ from .serializers import ProjectSerializer, LabelSerializer, DocumentSerializer,
 from .serializers import ProjectPolymorphicSerializer, RoleMappingSerializer, RoleSerializer
 from .utils import CSVParser, ExcelParser, JSONParser, PlainTextParser, FastTextParser, CoNLLParser, AudioParser, iterable_to_io
 from .utils import JSONLRenderer
-from .utils import JSONPainter, CSVPainter, FASTText
+from .utils import JSONPainter, CSVPainter, FastTextPainter
 
 IsInProjectReadOnlyOrAdmin = (IsAnnotatorAndReadOnly | IsAnnotationApproverAndReadOnly | IsProjectAdmin)
 IsInProjectOrAdmin = (IsAnnotator | IsAnnotationApprover | IsProjectAdmin)
@@ -370,7 +370,7 @@ class TextDownloadAPI(APIView):
             data = JSONPainter.paint_labels(documents, labels)
         if format == 'fasttext':
             labels = project.labels.all()
-            data = FASTText.paint_labels(documents, labels)
+            data = FastTextPainter.paint_labels(documents, labels)
         else:
             data = painter.paint(documents)
         return Response(data)
@@ -379,7 +379,7 @@ class TextDownloadAPI(APIView):
         if format == 'csv':
             return CSVPainter()
         elif format == 'fasttext':
-            return FASTText()
+            return FastTextPainter()
         elif format == 'json' or format == "json1":
             return JSONPainter()
         else:

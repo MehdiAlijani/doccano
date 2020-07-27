@@ -55,6 +55,11 @@ export const getters = {
       text: 'CSV',
       accept: '.csv'
     }
+    const fasttext = {
+      type: 'fasttext',
+      text: 'FASTTEXT',
+      accept: '.fasttext'
+    }
     const json = {
       type: 'json',
       text: 'JSONL',
@@ -151,6 +156,10 @@ export const getters = {
       type: 'csv',
       text: 'CSV'
     }
+    const fasttext = {
+      type: 'fasttext',
+      text: 'FASTTEXT'
+    }
     const json = {
       type: 'json',
       text: 'JSONL'
@@ -173,7 +182,8 @@ export const getters = {
       ]
       return [
         csv,
-        json
+        json,
+        fasttext
       ]
     } else if (state.current.project_type === 'SequenceLabeling') {
       json.examples = [
@@ -212,7 +222,9 @@ export const getters = {
   },
   loadSearchOptions(state) {
     const checkpoint = JSON.parse(localStorage.getItem('checkpoint')) || {}
-    return checkpoint[state.current.id] ? checkpoint[state.current.id] : { page: 1 }
+    return checkpoint[state.current.id] ? checkpoint[state.current.id] : {
+      page: 1
+    }
   }
 }
 
@@ -250,7 +262,9 @@ export const mutations = {
 }
 
 export const actions = {
-  getProjectList({ commit }, config) {
+  getProjectList({
+    commit
+  }, config) {
     commit('setLoading', true)
     ProjectService.getProjectList()
       .then((response) => {
@@ -263,7 +277,9 @@ export const actions = {
         commit('setLoading', false)
       })
   },
-  createProject({ commit }, project) {
+  createProject({
+    commit
+  }, project) {
     ProjectService.createProject(project)
       .then((response) => {
         commit('createProject', response.data)
@@ -272,7 +288,9 @@ export const actions = {
         alert(error)
       })
   },
-  updateProject({ commit }, data) {
+  updateProject({
+    commit
+  }, data) {
     ProjectService.updateProject(data.projectId, data)
       .then((response) => {
         commit('updateProject', response.data)
@@ -281,7 +299,10 @@ export const actions = {
         alert(error)
       })
   },
-  deleteProject({ commit, state }, config) {
+  deleteProject({
+    commit,
+    state
+  }, config) {
     for (const project of state.selected) {
       ProjectService.deleteProject(project.id)
         .then((response) => {
@@ -293,7 +314,9 @@ export const actions = {
     }
     commit('resetSelected')
   },
-  setCurrentProject({ commit }, projectId) {
+  setCurrentProject({
+    commit
+  }, projectId) {
     return ProjectService.fetchProjectById(projectId)
       .then((response) => {
         commit('setCurrent', response.data)
@@ -302,7 +325,9 @@ export const actions = {
         alert(error)
       })
   },
-  updateCurrentProject({ commit }, data) {
+  updateCurrentProject({
+    commit
+  }, data) {
     ProjectService.updateProject(data.projectId, data)
       .then((response) => {
         commit('setCurrent', response.data)

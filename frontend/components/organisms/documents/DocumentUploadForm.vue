@@ -8,30 +8,14 @@
     @cancel="cancel"
   >
     <template #content>
-      <v-form
-        ref="form"
-        v-model="valid"
-      >
-        <v-alert
-          v-show="showError"
-          v-model="showError"
-          type="error"
-          dismissible
-        >
+      <v-form ref="form" v-model="valid">
+        <v-alert v-show="showError" v-model="showError" type="error" dismissible>
           The file could not be uploaded. Maybe invalid format.
           Please check available formats carefully.
         </v-alert>
         <h2>Select a file format</h2>
-        <v-radio-group
-          v-model="selectedFormat"
-          :rules="fileFormatRules"
-        >
-          <v-radio
-            v-for="(format, i) in formats"
-            :key="i"
-            :label="format.text"
-            :value="format"
-          />
+        <v-radio-group v-model="selectedFormat" :rules="fileFormatRules">
+          <v-radio v-for="(format, i) in formats" :key="i" :label="format.text" :value="format" />
         </v-radio-group>
         <v-sheet
           v-if="selectedFormat"
@@ -40,7 +24,8 @@
           class="mb-5 pa-5"
         >
           <span v-for="(example, index) in selectedFormat.examples" :key="index">
-            {{ example }}<br>
+            {{ example }}
+            <br />
           </span>
         </v-sheet>
         <h2>Select a file</h2>
@@ -56,24 +41,24 @@
 </template>
 
 <script>
-import BaseCard from '@/components/molecules/BaseCard'
-import { fileFormatRules, uploadFileRules } from '@/rules/index'
+import BaseCard from "@/components/molecules/BaseCard";
+import { fileFormatRules, uploadFileRules } from "@/rules/index";
 
 export default {
   components: {
-    BaseCard
+    BaseCard,
   },
   props: {
     uploadDocument: {
       type: Function,
       default: () => {},
-      required: true
+      required: true,
     },
     formats: {
       type: Array,
       default: () => [],
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -82,46 +67,46 @@ export default {
       selectedFormat: null,
       fileFormatRules,
       uploadFileRules,
-      showError: false
-    }
+      showError: false,
+    };
   },
 
   computed: {
     acceptType() {
       if (this.selectedFormat) {
-        return this.selectedFormat.accept
+        return this.selectedFormat.accept;
       } else {
-        return '.txt,.csv,.json,.jsonl'
+        return ".txt,.csv,.json,.jsonl,.txt";
       }
-    }
+    },
   },
 
   methods: {
     cancel() {
-      this.$emit('close')
+      this.$emit("close");
     },
     validate() {
-      return this.$refs.form.validate()
+      return this.$refs.form.validate();
     },
     reset() {
-      this.$refs.form.reset()
+      this.$refs.form.reset();
     },
     create() {
       if (this.validate()) {
         this.uploadDocument({
           projectId: this.$route.params.id,
           format: this.selectedFormat.type,
-          file: this.file
+          file: this.file,
         })
           .then((response) => {
-            this.reset()
-            this.cancel()
+            this.reset();
+            this.cancel();
           })
           .catch(() => {
-            this.showError = true
-          })
+            this.showError = true;
+          });
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>

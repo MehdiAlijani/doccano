@@ -8,21 +8,10 @@
     @cancel="cancel"
   >
     <template #content>
-      <v-form
-        ref="form"
-        v-model="valid"
-      >
+      <v-form ref="form" v-model="valid">
         <h2>Select a file format</h2>
-        <v-radio-group
-          v-model="selectedFormat"
-          :rules="fileFormatRules"
-        >
-          <v-radio
-            v-for="(format, i) in formats"
-            :key="i"
-            :label="format.text"
-            :value="format"
-          />
+        <v-radio-group v-model="selectedFormat" :rules="fileFormatRules">
+          <v-radio v-for="(format, i) in formats" :key="i" :label="format.text" :value="format" />
         </v-radio-group>
         <v-sheet
           v-if="selectedFormat"
@@ -31,7 +20,8 @@
           class="mb-5 pa-5"
         >
           <span v-for="(example, index) in selectedFormat.examples" :key="index">
-            {{ example }}<br>
+            {{ example }}
+            <br />
           </span>
         </v-sheet>
       </v-form>
@@ -40,24 +30,24 @@
 </template>
 
 <script>
-import BaseCard from '@/components/molecules/BaseCard'
-import { fileFormatRules, uploadFileRules } from '@/rules/index'
+import BaseCard from "@/components/molecules/BaseCard";
+import { fileFormatRules, uploadFileRules } from "@/rules/index";
 
 export default {
   components: {
-    BaseCard
+    BaseCard,
   },
   props: {
     exportDocument: {
       type: Function,
       default: () => {},
-      required: true
+      required: true,
     },
     formats: {
       type: Array,
       default: () => [],
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -65,40 +55,40 @@ export default {
       file: null,
       selectedFormat: null,
       fileFormatRules,
-      uploadFileRules
-    }
+      uploadFileRules,
+    };
   },
 
   computed: {
     acceptType() {
       if (this.selectedFormat) {
-        return this.selectedFormat.accept
+        return this.selectedFormat.accept;
       } else {
-        return '.txt,.csv,.json,.jsonl'
+        return ".txt,.csv,.json,.jsonl,.txt";
       }
-    }
+    },
   },
 
   methods: {
     cancel() {
-      this.$emit('close')
+      this.$emit("close");
     },
     validate() {
-      return this.$refs.form.validate()
+      return this.$refs.form.validate();
     },
     reset() {
-      this.$refs.form.reset()
+      this.$refs.form.reset();
     },
     download() {
       if (this.validate()) {
         this.exportDocument({
           projectId: this.$route.params.id,
-          format: this.selectedFormat.type
-        })
-        this.reset()
-        this.cancel()
+          format: this.selectedFormat.type,
+        });
+        this.reset();
+        this.cancel();
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>

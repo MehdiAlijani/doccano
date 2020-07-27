@@ -349,30 +349,27 @@ class PlainTextParser(FileParser):
 
 class FastTextParser(FileParser):
     """Uploads fasttext
-
     The file fasttext format is as follows:
-
     For example:
     ```
     __label__sauce __label__cheese How much does potato starch affect a cheese sauce recipe?
-
     ```
     """
 
     def parse_fasttext(self, text):
         items = text.split()
 
-        text = []
-        for item in items:
-            if ('__label__' not in item):
-                text.append(item)
+        text = [
+            item
+            for item in items
+            if not item.startswith("__lable__")
+        ]
 
-        return (' '.join(text))
+        return ' '.join(text)
 
-    def parse_fast_labels(self, text):
+    def parse_fasttext_labels(self, text):
         items = text.split()
         labels = []
-        text = []
         for item in items:
             if '__label__' in item:
                 labels.append(item.replace('__label__', ''))
@@ -389,7 +386,7 @@ class FastTextParser(FileParser):
             if not batch:
                 break
 
-            yield [{'text': self.parse_fasttext(line), 'labels': self.parse_fast_labels(line)} for line in batch]
+            yield [{'text': self.parse_fasttext(line), 'labels': self.parse_fasttext_labels(line)} for line in batch]
 
 
 class CSVParser(FileParser):
@@ -534,7 +531,7 @@ class JSONPainter(object):
         return data
 
 
-class FASTText(JSONPainter):
+class FastTextPainter(JSONPainter):
 
     @staticmethod
     def paint_labels(documents, labels):
@@ -543,14 +540,10 @@ class FASTText(JSONPainter):
         data = []
 
         for d in serializer.data:
-            answer = ""
             labels = []
             for a in d['annotations']:
                 label_obj = [x for x in serializer_labels.data if x['id'] == a['label']][0]
-                label_text = label_obj['text']
-
-                labels.append("{} {}".format("__label", label_text))
-
+                labels.append("__label__{}".format(label_obj['text']))
             data.append("{} {}".format(" ".join(labels), text))
         return data
 
